@@ -1,13 +1,12 @@
 # pylint: disable=broad-exception-raised
 # pylint: disable=import-error
 
-# type: ignore
+from .mapreduce import hadoop as run_mapreduce_job  # type: ignore
 
 #
 # Columns:
 # total_bill, tip, sex, smoker, day, time, size
 #
-
 
 #
 # SELECT *, tip/total_bill as tip_rate
@@ -27,11 +26,9 @@ def mapper_query_1(sequence):
             result.append((index, row.strip() + "," + str(tip_rate)))
     return result
 
-
 def reducer_query_1(sequence):
     """Reducer"""
     return sequence
-
 
 #
 # SELECT *
@@ -50,11 +47,9 @@ def mapper_query_2(sequence):
                 result.append((index, row.strip()))
     return result
 
-
 def reducer_query_2(sequence):
     """Reducer"""
     return sequence
-
 
 #
 # SELECT *
@@ -73,11 +68,9 @@ def mapper_query_3(sequence):
                 result.append((index, row.strip()))
     return result
 
-
 def reducer_query_3(sequence):
     """Reducer"""
     return sequence
-
 
 #
 # SELECT *
@@ -96,11 +89,9 @@ def mapper_query_4(sequence):
                 result.append((index, row.strip()))
     return result
 
-
 def reducer_query_4(sequence):
     """Reducer"""
     return sequence
-
 
 #
 # SELECT sex, count(*)
@@ -117,7 +108,6 @@ def mapper_query_5(sequence):
         result.append((row_values[2], 1))
     return result
 
-
 def reducer_query_5(sequence):
     """Reducer"""
     counter = dict()
@@ -127,14 +117,41 @@ def reducer_query_5(sequence):
         counter[key] += value
     return list(counter.items())
 
-
 #
-# ??
 # SELECT day, AVG(tip)
 # FROM tips
 # GROUP BY day;
 #
+def mapper_query_6(sequence):
+    """Mapper"""
+    result = []
+    for index, (_, row) in enumerate(sequence):
+        if index == 0:
+            continue
+        row_values = row.strip().split(",")
+        day = row_values[4] 
+        tip = float(row_values[1]) 
+        result.append((day, tip))
+    return result
 
+def reducer_query_6(sequence):
+    """Reducer"""
+    totals = dict()
+    counts = dict()
+    
+    for key, value in sequence:
+        if key not in totals:
+            totals[key] = 0.0
+            counts[key] = 0
+        totals[key] += value
+        counts[key] += 1
+        
+    result = []
+    for key in totals:
+        promedio = totals[key] / counts[key]
+        result.append((key, promedio))
+        
+    return result
 
 #
 # ORQUESTADOR:
@@ -177,6 +194,12 @@ def run():
         output_folder="files/query_5/",
     )
 
+    run_mapreduce_job(
+        mapper_fn=mapper_query_6,
+        reducer_fn=reducer_query_6,
+        input_folder="files/input/",
+        output_folder="files/query_6/",
+    )
 
 if __name__ == "__main__":
     run()
